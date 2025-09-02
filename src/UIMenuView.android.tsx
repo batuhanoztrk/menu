@@ -14,7 +14,7 @@ const NativeMenuComponent = requireNativeComponent(
 
 type RefT = React.ElementRef<typeof NativeMenuComponent>;
 
-export const Commands = codegenNativeCommands<{
+const Commands = codegenNativeCommands<{
 	show: (viewRef: RefT) => void;
 }>({
 	supportedCommands: ["show"],
