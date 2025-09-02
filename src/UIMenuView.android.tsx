@@ -6,10 +6,19 @@ import {
 } from "react-native";
 import type { MenuComponentRef, NativeMenuComponentProps } from "./types";
 import { forwardRef, useImperativeHandle, useRef } from "react";
+import codegenNativeCommands from "react-native/Libraries/Utilities/codegenNativeCommands";
 
 const NativeMenuComponent = requireNativeComponent(
 	"MenuView",
 ) as HostComponent<NativeMenuComponentProps>;
+
+type RefT = React.ElementRef<typeof NativeMenuComponent>;
+
+export const Commands = codegenNativeCommands<{
+	show: (viewRef: RefT) => void;
+}>({
+	supportedCommands: ["show"],
+});
 
 const MenuComponent = forwardRef<MenuComponentRef, NativeMenuComponentProps>(
 	(props, ref) => {
@@ -20,11 +29,18 @@ const MenuComponent = forwardRef<MenuComponentRef, NativeMenuComponentProps>(
 			() => ({
 				show: () => {
 					if (nativeRef.current) {
-						const node = findNodeHandle(nativeRef.current);
-						const command =
-							UIManager.getViewManagerConfig("MenuView").Commands.show;
+						// biome-ignore lint/suspicious/noExplicitAny: React Native runtime flags like nativeFabricUIManager are not in TypeScript types. Using `any` here is intentional and safe.
+						const isFabric = !!(global as any).nativeFabricUIManager;
 
-						UIManager.dispatchViewManagerCommand(node, command, undefined);
+						if (isFabric) {
+							Commands.show(nativeRef.current);
+						} else {
+							const node = findNodeHandle(nativeRef.current);
+							const command =
+								UIManager.getViewManagerConfig("MenuView").Commands.show;
+
+							UIManager.dispatchViewManagerCommand(node, command, undefined);
+						}
 					}
 				},
 			}),
